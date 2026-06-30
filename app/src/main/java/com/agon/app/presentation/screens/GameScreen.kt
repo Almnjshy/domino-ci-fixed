@@ -11,16 +11,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -30,360 +27,594 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.agon.app.domain.model.*
 import kotlinx.coroutines.delay
-import kotlin.math.*
-import kotlin.random.Random
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  LUXURY THEME — Domino Royale
+//  THEME — Matching React Design Exactly
 // ═══════════════════════════════════════════════════════════════════════════
-private val DeepForest    = Color(0xFF06180A)
-private val DarkGreen     = Color(0xFF0D2E14)
-private val FeltGreen     = Color(0xFF1A4D28)
-private val MidGreen      = Color(0xFF2D6E3E)
-private val LightGreen    = Color(0xFF4CAF50)
-private val RoyalGold     = Color(0xFFD4AF37)
-private val BrightGold    = Color(0xFFFFD700)
-private val PaleGold      = Color(0xFFFFF8DC)
-private val BurnishedGold = Color(0xFFB8860B)
-private val WarmWood      = Color(0xFF3D2817)
-private val RichWood      = Color(0xFF5C3A1E)
-private val DarkWood      = Color(0xFF2A1A0E)
-private val Ivory         = Color(0xFFFFF8F0)
-private val Cream         = Color(0xFFF5F0E6)
-private val Charcoal      = Color(0xFF1A1A1A)
-private val SoftRed       = Color(0xFFE53935)
-private val SoftGreen     = Color(0xFF43A047)
+private val DeepGreen     = Color(0xFF0F1E14)   // Background
+private val CardBg        = Color(0xFF192D1F)   // Board / Cards
+private val CardBorder    = Color(0xFF253525)   // Card borders
+private val Gold          = Color(0xFFC9A84C)   // Primary accent
+private val LightGold     = Color(0xFFF0CC6E)   // Light gold
+private val TextPrimary   = Color(0xFFF0E8D0)   // Main text
+private val TextMuted     = Color(0xFFA09078)   // Secondary text
+private val TextDim       = Color(0xFF506050)   // Dim text
+private val TextDark      = Color(0xFF304030)   // Very dim
+private val Ivory         = Color(0xFFFFF8F0)   // Domino bg
+private val DominoDot     = Color(0xFF1C1C1E)   // Black dots
+private val DominoBorder  = Color(0xFF504840)   // Tile border
 
-private val GoldGradient = Brush.linearGradient(
-    colors = listOf(BurnishedGold, RoyalGold, BrightGold, RoyalGold, BurnishedGold),
-    start = Offset(0f, 0f),
-    end = Offset(400f, 400f)
-)
-
-private val CardGradient = Brush.linearGradient(
-    colors = listOf(Ivory, Cream, Ivory),
-    start = Offset(0f, 0f),
-    end = Offset(0f, 200f)
+// Player colors matching React
+private val PlayerColors = listOf(
+    Color(0xFF4A9EFF),  // Blue
+    Color(0xFF52C87A),  // Green
+    Color(0xFFFF9F4A),  // Orange
+    Color(0xFFE05252)   // Red
 )
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  PARTICLE SYSTEM — Confetti on win
+//  MAIN GAME SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
-private data class Particle(
-    val id: Int,
-    val x: Float,
-    val y: Float,
-    val vx: Float,
-    val vy: Float,
-    val size: Float,
-    val color: Color,
-    val rotation: Float,
-    val rotationSpeed: Float,
-    val life: Float = 1f
-)
-
 @Composable
-private fun ConfettiOverlay(
-    active: Boolean,
-    modifier: Modifier = Modifier
+fun GameScreen(
+    gameState: GameState,
+    isAiThinking: Boolean,
+    showResult: Boolean,
+    error: String?,
+    onTileClick: (DominoTile, BoardSide?) -> Unit,
+    onDrawOrPass: () -> Unit,
+    legalSides: (DominoTile) -> Set<BoardSide>,
+    onNewGame: () -> Unit,
+    onBackToMenu: () -> Unit,
+    onDismissResult: () -> Unit,
+    onClearError: () -> Unit
 ) {
-    var particles by remember { mutableStateOf<List<Particle>>(emptyList()) }
-    var tick by remember { mutableIntStateOf(0) }
+    var selectedTile by remember { mutableStateOf<DominoTile?>(null) }
+    var showHand by remember { mutableStateOf(true) }
 
-    LaunchedEffect(active) {
-        if (active) {
-            particles = List(80) {
-                Particle(
-                    id = it,
-                    x = Random.nextFloat() * 1000f,
-                    y = -Random.nextFloat() * 200f,
-                    vx = (Random.nextFloat() - 0.5f) * 8f,
-                    vy = Random.nextFloat() * 6f + 2f,
-                    size = Random.nextFloat() * 8f + 4f,
-                    color = listOf(RoyalGold, BrightGold, SoftRed, SoftGreen, Ivory)[Random.nextInt(5)],
-                    rotation = Random.nextFloat() * 360f,
-                    rotationSpeed = (Random.nextFloat() - 0.5f) * 20f
-                )
-            }
-            while (active) {
-                delay(16)
-                tick++
-                particles = particles.mapNotNull { p ->
-                    val newLife = p.life - 0.008f
-                    if (newLife <= 0) return@mapNotNull null
-                    p.copy(
-                        x = p.x + p.vx,
-                        y = p.y + p.vy,
-                        vy = p.vy + 0.15f,
-                        rotation = p.rotation + p.rotationSpeed,
-                        life = newLife
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DeepGreen)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // ── Header ──
+            GameHeader(
+                round = gameState.matchScore.currentRound,
+                stockCount = gameState.stockCount,
+                onBack = onBackToMenu
+            )
+
+            // ── Scores ──
+            ScoreBar(
+                players = gameState.players,
+                matchScore = gameState.matchScore,
+                currentPlayerIndex = gameState.currentPlayerIndex
+            )
+
+            // ── Status ──
+            StatusText(
+                message = gameState.message,
+                isAiThinking = isAiThinking,
+                currentPlayerName = gameState.currentPlayer?.name ?: ""
+            )
+
+            // ── Other Players Hands (Hidden) ──
+            OtherPlayersHands(
+                players = gameState.players,
+                currentPlayerIndex = gameState.currentPlayerIndex,
+                showHand = showHand
+            )
+
+            // ── Board ──
+            GameBoard(
+                boardState = gameState.board,
+                stockCount = gameState.stockCount,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(horizontal = 8.dp)
+            )
+
+            // ── Side Selector ──
+            AnimatedVisibility(visible = selectedTile != null) {
+                selectedTile?.let { tile ->
+                    SideSelector(
+                        tile = tile,
+                        onLeft = { onTileClick(tile, BoardSide.LEFT); selectedTile = null },
+                        onRight = { onTileClick(tile, BoardSide.RIGHT); selectedTile = null },
+                        onCancel = { selectedTile = null }
                     )
                 }
             }
-        } else {
-            particles = emptyList()
-        }
-    }
 
-    Canvas(modifier = modifier.fillMaxSize()) {
-        particles.forEach { p ->
-            drawCircle(
-                color = p.color.copy(alpha = p.life),
-                radius = p.size,
-                center = Offset(p.x, p.y)
+            // ── Error ──
+            if (error != null) {
+                ErrorBanner(error = error, onDismiss = onClearError)
+            }
+
+            // ── Player Hand ──
+            val currentPlayer = gameState.currentPlayer
+            if (currentPlayer != null && !currentPlayer.isAi && !gameState.isGameOver) {
+                PlayerHand(
+                    player = currentPlayer,
+                    playerIndex = gameState.currentPlayerIndex,
+                    legalSides = legalSides,
+                    selectedTile = selectedTile,
+                    onTileClick = { tile ->
+                        val sides = legalSides(tile)
+                        when {
+                            sides.isEmpty() -> Unit
+                            sides.size == 1 -> onTileClick(tile, sides.first())
+                            else -> selectedTile = if (selectedTile?.id == tile.id) null else tile
+                        }
+                    },
+                    onDrawOrPass = onDrawOrPass,
+                    canDraw = gameState.canDraw,
+                    stockCount = gameState.stockCount
+                )
+            } else if (isAiThinking) {
+                AiThinkingBar(currentPlayerName = gameState.currentPlayer?.name ?: "AI")
+            }
+
+            Spacer(Modifier.height(8.dp))
+        }
+
+        // ── Round Result Dialog ──
+        if (showResult && gameState.isGameOver && !gameState.isMatchOver) {
+            RoundResultDialog(
+                gameState = gameState,
+                onNextRound = onDismissResult,
+                onQuit = onBackToMenu
+            )
+        }
+
+        // ── Match Over Dialog ──
+        if (gameState.isMatchOver) {
+            MatchResultDialog(
+                gameState = gameState,
+                onRematch = onNewGame,
+                onQuit = onBackToMenu
             )
         }
     }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  AMBIENT BACKGROUND — Animated felt with light rays
+//  HEADER
 // ═══════════════════════════════════════════════════════════════════════════
 @Composable
-private fun LuxuryBackground() {
-    val infiniteTransition = rememberInfiniteTransition(label = "bg")
-    val angle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(60000, easing = LinearEasing)),
-        label = "rotate"
-    )
-    val pulse by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.5f,
-        animationSpec = infiniteRepeatable(tween(4000, easing = EaseInOutSine), RepeatMode.Reverse),
-        label = "pulse"
-    )
+private fun GameHeader(round: Int, stockCount: Int, onBack: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.5f))
+            .border(1.dp, Gold.copy(alpha = 0.13f))
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "رجوع",
+                tint = TextMuted,
+                modifier = Modifier.size(20.dp)
+            )
+        }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Base gradient
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(FeltGreen, DarkGreen, DeepForest),
-                        center = Offset(0.5f, 0.4f),
-                        radius = 1.2f
-                    )
-                )
+        Text(
+            text = "دومينو",
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Center,
+            color = Gold,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp
         )
 
-        // Animated light rays
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val centerX = size.width / 2f
-            val centerY = size.height / 3f
-            for (i in 0..5) {
-                val rayAngle = angle + i * 60f
-                val rad = Math.toRadians(rayAngle.toDouble())
-                val endX = centerX + cos(rad).toFloat() * size.width * 1.5f
-                val endY = centerY + sin(rad).toFloat() * size.height * 1.5f
-                drawLine(
-                    color = RoyalGold.copy(alpha = pulse * 0.03f),
-                    start = Offset(centerX, centerY),
-                    end = Offset(endX, endY),
-                    strokeWidth = 80f
+        Text(
+            text = "جولة $round",
+            color = TextDim,
+            fontSize = 10.sp
+        )
+
+        Spacer(Modifier.width(8.dp))
+
+        Text(
+            text = "مخزون:$stockCount",
+            color = TextDim,
+            fontSize = 10.sp
+        )
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  SCORE BAR
+// ═══════════════════════════════════════════════════════════════════════════
+@Composable
+private fun ScoreBar(
+    players: List<Player>,
+    matchScore: MatchScore,
+    currentPlayerIndex: Int
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 5.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp)
+    ) {
+        players.forEachIndexed { index, player ->
+            val isCurrent = index == currentPlayerIndex
+            val color = PlayerColors[index % PlayerColors.size]
+            val pct = (matchScore.progressPercent(player.id) * 100).toInt()
+
+            Card(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isCurrent) color.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.03f)
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    if (isCurrent) color else Color(0xFF1E2E1E)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 5.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (player.isAi) "🤖 ${player.name}" else player.name,
+                            fontSize = 10.sp,
+                            color = if (isCurrent) color else TextMuted,
+                            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = "${matchScore.playerScore(player.id)}",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = color
+                        )
+                    }
+
+                    Spacer(Modifier.height(3.dp))
+
+                    // Progress bar
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(3.dp))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .width(pct.dp)
+                                .background(color, RoundedCornerShape(3.dp))
+                        )
+                    }
+
+                    Text(
+                        text = "${matchScore.playerRoundsWon(player.id)} جولة",
+                        fontSize = 9.sp,
+                        color = TextDark,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  STATUS TEXT
+// ═══════════════════════════════════════════════════════════════════════════
+@Composable
+private fun StatusText(message: String, isAiThinking: Boolean, currentPlayerName: String) {
+    val displayText = if (isAiThinking) {
+        "🤔 $currentPlayerName يفكر..."
+    } else {
+        message
+    }
+
+    Text(
+        text = displayText,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 3.dp),
+        textAlign = TextAlign.Center,
+        fontSize = 12.sp,
+        color = if (isAiThinking) TextMuted else LightGold,
+        fontWeight = FontWeight.SemiBold,
+        minLines = 1
+    )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  OTHER PLAYERS HANDS (Hidden/Face-down)
+// ═══════════════════════════════════════════════════════════════════════════
+@Composable
+private fun OtherPlayersHands(
+    players: List<Player>,
+    currentPlayerIndex: Int,
+    showHand: Boolean
+) {
+    Column {
+        players.forEachIndexed { index, player ->
+            if (index == currentPlayerIndex) return@forEachIndexed
+
+            val isCurrent = index == currentPlayerIndex
+            val color = PlayerColors[index % PlayerColors.size]
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 2.dp)
+                    .alpha(if (isCurrent) 1f else 0.45f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Dot indicator
+                Box(
+                    modifier = Modifier
+                        .size(7.dp)
+                        .background(
+                            if (isCurrent) color else Color(0xFF2A3A2E),
+                            CircleShape
+                        )
+                )
+
+                Spacer(Modifier.width(5.dp))
+
+                Text(
+                    text = "${if (player.isAi) "🤖 " else ""}${player.name} (${player.hand.size})",
+                    fontSize = 10.sp,
+                    color = TextMuted,
+                    modifier = Modifier.width(85.dp)
+                )
+
+                // Hidden tiles
+                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    repeat(player.hand.size) {
+                        HiddenTileSmall()
+                    }
+                }
+
+                Spacer(Modifier.weight(1f))
+
+                Text(
+                    text = "${player.handValue}",
+                    fontSize = 9.sp,
+                    color = TextDark
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HiddenTileSmall() {
+    Box(
+        modifier = Modifier
+            .size(width = 18.dp, height = 30.dp)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(Color(0xFF22223A), Color(0xFF16162A)),
+                    start = Offset(0f, 0f),
+                    end = Offset(4f, 4f)
+                ),
+                RoundedCornerShape(3.dp)
+            )
+            .border(0.5.dp, Color(0xFF2A2A3E), RoundedCornerShape(3.dp))
+    )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  GAME BOARD
+// ═══════════════════════════════════════════════════════════════════════════
+@Composable
+private fun GameBoard(
+    boardState: BoardState,
+    stockCount: Int,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBg),
+        border = BorderStroke(1.dp, CardBorder)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            if (boardState.isEmpty) {
+                EmptyBoardMessage()
+            } else {
+                BoardContent(boardState = boardState, stockCount = stockCount)
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyBoardMessage() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        DominoTileView(
+            tile = DominoTile(0, 0),
+            isPlaceholder = true,
+            modifier = Modifier.size(width = 48.dp, height = 80.dp)
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            "اللوحة فارغة — ابدأ اللعب",
+            color = TextDark,
+            fontSize = 12.sp,
+            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+        )
+    }
+}
+
+@Composable
+private fun BoardContent(boardState: BoardState, stockCount: Int) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Board ends
+        if (!boardState.isEmpty) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "← ${boardState.leftEnd}",
+                    fontSize = 11.sp,
+                    color = Gold
+                )
+                Text(
+                    text = "${boardState.tiles.size} قطعة",
+                    fontSize = 9.sp,
+                    color = TextDark
+                )
+                Text(
+                    text = "${boardState.rightEnd} →",
+                    fontSize = 11.sp,
+                    color = Gold
                 )
             }
         }
 
-        // Subtle vignette
-        Box(
+        // Tiles row
+        LazyRow(
             modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(Color.Transparent, DeepForest.copy(alpha = 0.6f)),
-                        radius = 1.3f
-                    )
-                )
-        )
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  GLASS CARD — Glassmorphism container
-// ═══════════════════════════════════════════════════════════════════════════
-@Composable
-private fun GlassCard(
-    modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(20.dp),
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Card(
-        modifier = modifier,
-        shape = shape,
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.08f),
-                            Color.White.copy(alpha = 0.02f)
-                        )
-                    )
-                )
-                .border(
-                    width = 1.dp,
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            RoyalGold.copy(alpha = 0.3f),
-                            Color.White.copy(alpha = 0.1f),
-                            RoyalGold.copy(alpha = 0.3f)
-                        )
-                    ),
-                    shape = shape
-                )
-                .padding(16.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(content = content)
+            val displayTiles = if (boardState.tiles.size > 9)
+                boardState.tiles.takeLast(9) else boardState.tiles
+
+            items(displayTiles) { placed ->
+                DominoTileView(
+                    tile = placed.tile,
+                    isMini = boardState.tiles.size > 9,
+                    horizontal = true,
+                    modifier = if (boardState.tiles.size > 9)
+                        Modifier.size(width = 32.dp, height = 22.dp)
+                    else
+                        Modifier.size(width = 38.dp, height = 26.dp)
+                )
+            }
         }
     }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  3D DOMINO TILE — With tilt, shadow, and premium feel
+//  DOMINO TILE VIEW
 // ═══════════════════════════════════════════════════════════════════════════
 @Composable
-fun LuxuryDominoTile(
+fun DominoTileView(
     tile: DominoTile,
     modifier: Modifier = Modifier,
     isMini: Boolean = false,
     isPlaceholder: Boolean = false,
     isSelected: Boolean = false,
     isLegal: Boolean = false,
-    isHidden: Boolean = false,
     horizontal: Boolean = false,
     onClick: (() -> Unit)? = null
 ) {
-    var isHovered by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue = when {
-            isSelected -> 1.12f
-            isHovered -> 1.06f
-            isLegal -> 1.03f
-            else -> 1f
-        },
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = 400f),
+        targetValue = if (isSelected) 1.07f else if (isLegal) 1.03f else 1f,
+        animationSpec = tween(150),
         label = "scale"
     )
-    val elevation by animateDpAsState(
-        targetValue = when {
-            isSelected -> 16.dp
-            isHovered -> 12.dp
-            isLegal -> 6.dp
-            else -> 3.dp
-        },
-        animationSpec = tween(200),
-        label = "elevation"
-    )
-    val glowAlpha by animateFloatAsState(
-        targetValue = if (isSelected) 0.6f else if (isLegal) 0.3f else 0f,
-        animationSpec = tween(300),
-        label = "glow"
-    )
-    val yOffset by animateFloatAsState(
-        targetValue = if (isSelected) -12f else if (isHovered) -6f else 0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy),
-        label = "yOffset"
+    val ty by animateFloatAsState(
+        targetValue = if (isSelected) (-10f) else if (isLegal) (-3f) else 0f,
+        animationSpec = tween(150),
+        label = "ty"
     )
 
-    val tileWidth = if (isMini) 36.dp else if (horizontal) 52.dp else 56.dp
-    val tileHeight = if (isMini) 60.dp else if (horizontal) 36.dp else 96.dp
+    val tileWidth = if (isMini) 36.dp else if (horizontal) 72.dp else 40.dp
+    val tileHeight = if (isMini) 46.dp else if (horizontal) 40.dp else 80.dp
 
     Box(
         modifier = modifier
-            .offset(y = yOffset.dp)
+            .offset(y = ty.dp)
             .scale(scale)
             .size(width = tileWidth, height = tileHeight)
+            .background(
+                when {
+                    isPlaceholder -> Color.White.copy(alpha = 0.05f)
+                    else -> Ivory
+                },
+                RoundedCornerShape(5.dp)
+            )
+            .border(
+                width = when {
+                    isSelected -> 3.dp
+                    isPlaceholder -> 1.dp
+                    else -> if (horizontal) 1.dp else 2.dp
+                },
+                color = when {
+                    isSelected -> Gold
+                    isPlaceholder -> Color.White.copy(alpha = 0.3f)
+                    else -> DominoBorder
+                },
+                shape = RoundedCornerShape(5.dp)
+            )
             .then(
-                if (onClick != null && !isPlaceholder && !isHidden)
+                if (onClick != null && !isPlaceholder)
                     Modifier.pointerInput(Unit) {
-                        detectTapGestures(
-                            onPress = {
-                                isHovered = true
-                                tryAwaitRelease()
-                                isHovered = false
-                            },
-                            onTap = { onClick() }
-                        )
+                        detectTapGestures(onTap = { onClick() })
                     }
                 else Modifier
             ),
         contentAlignment = Alignment.Center
     ) {
-        // Glow effect
-        if (glowAlpha > 0) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding((-4).dp)
-                    .background(
-                        if (isSelected) BrightGold.copy(alpha = glowAlpha * 0.4f)
-                        else SoftGreen.copy(alpha = glowAlpha * 0.3f),
-                        RoundedCornerShape(12.dp)
+        if (!isPlaceholder) {
+            if (horizontal) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(2.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    DotFace(value = tile.top, isMini = isMini, modifier = Modifier.weight(1f))
+                    VerticalDivider(
+                        color = DominoBorder,
+                        thickness = if (isMini) 1.dp else 2.dp
                     )
-                    .blur(12.dp)
-            )
-        }
-
-        // Main tile
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .shadow(elevation, RoundedCornerShape(10.dp), spotColor = Color.Black.copy(alpha = 0.4f))
-                .background(
-                    when {
-                        isHidden -> Charcoal
-                        isPlaceholder -> Color.White.copy(alpha = 0.05f)
-                        else -> Ivory
-                    },
-                    RoundedCornerShape(10.dp)
-                )
-                .border(
-                    width = when {
-                        isSelected -> 2.5.dp
-                        isPlaceholder -> 1.dp
-                        else -> 1.5.dp
-                    },
-                    brush = when {
-                        isSelected -> GoldGradient
-                        isPlaceholder -> Brush.linearGradient(
-                            colors = listOf(Color.White.copy(alpha = 0.2f), Color.White.copy(alpha = 0.1f))
-                        )
-                        else -> Brush.linearGradient(colors = listOf(WarmWood, RichWood))
-                    },
-                    shape = RoundedCornerShape(10.dp)
-                )
-                .padding(3.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            if (isHidden) {
-                HiddenTilePattern()
-            } else if (!isPlaceholder) {
-                if (horizontal) {
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        DotFace(value = tile.top, isMini = isMini, modifier = Modifier.weight(1f))
-                        VerticalDivider(color = WarmWood, thickness = if (isMini) 1.dp else 2.dp)
-                        DotFace(value = tile.bottom, isMini = isMini, modifier = Modifier.weight(1f))
-                    }
-                } else {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.SpaceEvenly,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        DotFace(value = tile.top, isMini = isMini, modifier = Modifier.weight(1f))
-                        HorizontalDivider(color = WarmWood, thickness = if (isMini) 1.dp else 2.dp)
-                        DotFace(value = tile.bottom, isMini = isMini, modifier = Modifier.weight(1f))
-                    }
+                    DotFace(value = tile.bottom, isMini = isMini, modifier = Modifier.weight(1f))
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(3.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    DotFace(value = tile.top, isMini = isMini, modifier = Modifier.weight(1f))
+                    HorizontalDivider(
+                        color = DominoBorder,
+                        thickness = if (isMini) 1.dp else 2.dp,
+                        modifier = Modifier.padding(horizontal = if (isMini) 2.dp else 6.dp)
+                    )
+                    DotFace(value = tile.bottom, isMini = isMini, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -391,26 +622,13 @@ fun LuxuryDominoTile(
 }
 
 @Composable
-private fun HiddenTilePattern() {
-    Canvas(modifier = Modifier.fillMaxSize().padding(4.dp)) {
-        val step = 6f
-        var x = 0f
-        while (x < size.width + size.height) {
-            drawLine(
-                color = Color(0xFF3A3A4A),
-                start = Offset(x, 0f),
-                end = Offset(x - size.height, size.height),
-                strokeWidth = 1f
-            )
-            x += step
-        }
-    }
-}
-
-@Composable
 private fun DotFace(value: Int, isMini: Boolean, modifier: Modifier = Modifier) {
-    val dotSize = if (isMini) 3.5.dp else 6.5.dp
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    val dotSize = if (isMini) 3.5.dp else 7.dp
+
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
         when (value) {
             0 -> {}
             1 -> CenterDot(dotSize)
@@ -428,14 +646,7 @@ private fun Dot(size: Dp, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .size(size)
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(Charcoal, Charcoal.copy(alpha = 0.8f)),
-                    radius = 0.7f
-                ),
-                CircleShape
-            )
-            .shadow(1.dp, CircleShape)
+            .background(DominoDot, CircleShape)
     )
 }
 
@@ -482,696 +693,167 @@ private fun SixDots(size: Dp) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  MAIN GAME SCREEN — Luxury Edition
+//  SIDE SELECTOR
 // ═══════════════════════════════════════════════════════════════════════════
 @Composable
-fun GameScreen(
-    gameState: GameState,
-    isAiThinking: Boolean,
-    showResult: Boolean,
-    error: String?,
-    onTileClick: (DominoTile, BoardSide?) -> Unit,
-    onDrawOrPass: () -> Unit,
-    legalSides: (DominoTile) -> Set<BoardSide>,
-    onNewGame: () -> Unit,
-    onBackToMenu: () -> Unit,
-    onDismissResult: () -> Unit,
-    onClearError: () -> Unit
-) {
-    var selectedTile by remember { mutableStateOf<DominoTile?>(null) }
-    val showConfetti = gameState.isMatchOver
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Background
-        LuxuryBackground()
-
-        // Confetti on match win
-        ConfettiOverlay(active = showConfetti)
-
-        Column(modifier = Modifier.fillMaxSize()) {
-            // ── Top Bar ──
-            LuxuryTopBar(
-                message = gameState.message,
-                isAiThinking = isAiThinking,
-                onBack = onBackToMenu
-            )
-
-            // ── Score Crown ──
-            ScoreCrown(
-                matchScore = gameState.matchScore,
-                players = gameState.players,
-                currentPlayerIndex = gameState.currentPlayerIndex
-            )
-
-            // ── Player Avatars ──
-            PlayerAvatars(
-                players = gameState.players,
-                currentPlayerIndex = gameState.currentPlayerIndex,
-                matchScore = gameState.matchScore
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            // ── The Board ──
-            LuxuryBoard(
-                boardState = gameState.board,
-                stockCount = gameState.stockCount,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 12.dp)
-            )
-
-            // ── Side Selector ──
-            AnimatedVisibility(
-                visible = selectedTile != null,
-                enter = slideInVertically { it } + fadeIn(),
-                exit = slideOutVertically { it } + fadeOut()
-            ) {
-                selectedTile?.let { tile ->
-                    LuxurySideSelector(
-                        tile = tile,
-                        onLeft = { onTileClick(tile, BoardSide.LEFT); selectedTile = null },
-                        onRight = { onTileClick(tile, BoardSide.RIGHT); selectedTile = null },
-                        onCancel = { selectedTile = null }
-                    )
-                }
-            }
-
-            // ── Error ──
-            if (error != null) {
-                LuxuryErrorBanner(error = error, onDismiss = onClearError)
-            }
-
-            // ── Player Hand ──
-            val currentPlayer = gameState.currentPlayer
-            if (currentPlayer != null && !currentPlayer.isAi && !gameState.isGameOver) {
-                LuxuryPlayerHand(
-                    player = currentPlayer,
-                    legalSides = legalSides,
-                    selectedTile = selectedTile,
-                    onTileClick = { tile ->
-                        val sides = legalSides(tile)
-                        when {
-                            sides.isEmpty() -> Unit
-                            sides.size == 1 -> onTileClick(tile, sides.first())
-                            else -> selectedTile = if (selectedTile?.id == tile.id) null else tile
-                        }
-                    },
-                    onDrawOrPass = onDrawOrPass,
-                    canDraw = gameState.canDraw
-                )
-            } else if (isAiThinking) {
-                LuxuryAiThinking()
-            }
-
-            Spacer(Modifier.height(8.dp))
-        }
-
-        // ── Dialogs ──
-        if (showResult && gameState.isGameOver && !gameState.isMatchOver) {
-            LuxuryRoundDialog(
-                gameState = gameState,
-                onNextRound = onDismissResult,
-                onQuit = onBackToMenu
-            )
-        }
-
-        if (gameState.isMatchOver) {
-            LuxuryMatchDialog(
-                gameState = gameState,
-                onRematch = onNewGame,
-                onQuit = onBackToMenu
-            )
-        }
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  TOP BAR
-// ═══════════════════════════════════════════════════════════════════════════
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun LuxuryTopBar(message: String, isAiThinking: Boolean, onBack: () -> Unit) {
-    TopAppBar(
-        title = {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.titleMedium,
-                color = PaleGold,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "رجوع",
-                    tint = RoyalGold,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-        },
-        actions = {
-            if (isAiThinking) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(RoyalGold.copy(alpha = 0.15f), CircleShape)
-                        .padding(6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = BrightGold,
-                        strokeWidth = 2.5.dp
-                    )
-                }
-            } else {
-                Spacer(Modifier.width(48.dp))
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent
-        ),
-        modifier = Modifier.background(
-            Brush.verticalGradient(
-                colors = listOf(DeepForest.copy(alpha = 0.9f), Color.Transparent)
-            )
-        )
-    )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  SCORE CROWN — Premium score display
-// ═══════════════════════════════════════════════════════════════════════════
-@Composable
-private fun ScoreCrown(
-    matchScore: MatchScore,
-    players: List<Player>,
-    currentPlayerIndex: Int
-) {
-    GlassCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            players.forEachIndexed { index, player ->
-                val isCurrent = index == currentPlayerIndex
-                val score = matchScore.playerScore(player.id)
-                val progress = matchScore.progressPercent(player.id)
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Crown for leader
-                    if (score == players.maxOf { matchScore.playerScore(it.id) } && score > 0) {
-                        Text(
-                            "👑",
-                            fontSize = 16.sp,
-                            modifier = Modifier.offset(y = (-4).dp)
-                        )
-                    }
-                    Text(
-                        player.displayName(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isCurrent) BrightGold else PaleGold.copy(alpha = 0.8f),
-                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Box(contentAlignment = Alignment.Center) {
-                        // Background ring
-                        CircularProgressIndicator(
-                            progress = { 1f },
-                            modifier = Modifier.size(52.dp),
-                            color = Color.White.copy(alpha = 0.1f),
-                            strokeWidth = 4.dp
-                        )
-                        // Progress ring
-                        CircularProgressIndicator(
-                            progress = { progress },
-                            modifier = Modifier.size(52.dp),
-                            color = if (isCurrent) BrightGold else RoyalGold,
-                            strokeWidth = 4.dp
-                        )
-                        Text(
-                            "$score",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = if (isCurrent) BrightGold else PaleGold
-                        )
-                    }
-                    Text(
-                        "${matchScore.playerRoundsWon(player.id)} جولة",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = PaleGold.copy(alpha = 0.6f)
-                    )
-                }
-                if (index < players.size - 1) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(
-                                Brush.radialGradient(
-                                    colors = listOf(RoyalGold, BurnishedGold)
-                                ),
-                                CircleShape
-                            )
-                            .border(2.dp, BrightGold, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            "VS",
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 11.sp,
-                            color = DeepForest
-                        )
-                    }
-                }
-            }
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "الهدف: ${matchScore.targetScore} نقطة  •  الجولة ${matchScore.currentRound}",
-            style = MaterialTheme.typography.labelSmall,
-            color = PaleGold.copy(alpha = 0.7f),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  PLAYER AVATARS
-// ═══════════════════════════════════════════════════════════════════════════
-@Composable
-private fun PlayerAvatars(
-    players: List<Player>,
-    currentPlayerIndex: Int,
-    matchScore: MatchScore
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        players.forEachIndexed { i, player ->
-            val isCurrent = i == currentPlayerIndex
-            val infiniteTransition = rememberInfiniteTransition(label = "pulse$i")
-            val pulse by infiniteTransition.animateFloat(
-                initialValue = 1f,
-                targetValue = if (isCurrent) 1.08f else 1f,
-                animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
-                label = "pulse"
-            )
-            val glowAlpha by animateFloatAsState(
-                targetValue = if (isCurrent) 0.8f else 0f,
-                animationSpec = tween(500),
-                label = "glow"
-            )
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(contentAlignment = Alignment.Center) {
-                    // Glow ring
-                    if (glowAlpha > 0) {
-                        Box(
-                            modifier = Modifier
-                                .size(58.dp)
-                                .background(BrightGold.copy(alpha = glowAlpha * 0.3f), CircleShape)
-                                .blur(8.dp)
-                        )
-                    }
-                    Card(
-                        modifier = Modifier.scale(pulse),
-                        shape = CircleShape,
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isCurrent) BrightGold else Color.White.copy(alpha = 0.1f)
-                        ),
-                        border = if (isCurrent) {
-                            BorderStroke(3.dp, BrightGold)
-                        } else {
-                            BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
-                        }
-                    ) {
-                        Box(
-                            modifier = Modifier.size(48.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                if (player.isAi) "🤖" else "👤",
-                                fontSize = 24.sp
-                            )
-                        }
-                    }
-                }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    player.displayName(),
-                    fontSize = 11.sp,
-                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isCurrent) BrightGold else PaleGold.copy(alpha = 0.8f)
-                )
-                Text(
-                    "${player.hand.size} قطع",
-                    fontSize = 10.sp,
-                    color = PaleGold.copy(alpha = 0.6f)
-                )
-            }
-        }
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  LUXURY BOARD
-// ═══════════════════════════════════════════════════════════════════════════
-@Composable
-private fun LuxuryBoard(
-    boardState: BoardState,
-    stockCount: Int,
-    modifier: Modifier = Modifier
-) {
-    GlassCard(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp)
-    ) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (boardState.isEmpty) {
-                EmptyBoard()
-            } else {
-                BoardWithTiles(boardState = boardState, stockCount = stockCount)
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyBoard() {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        LuxuryDominoTile(
-            tile = DominoTile(0, 0, 0),
-            isPlaceholder = true,
-            modifier = Modifier.size(width = 48.dp, height = 80.dp)
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(
-            "اللوحة جاهزة",
-            color = PaleGold.copy(alpha = 0.7f),
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium
-        )
-        Text(
-            "اختر قطعة للبدء",
-            color = PaleGold.copy(alpha = 0.4f),
-            fontSize = 13.sp
-        )
-    }
-}
-
-@Composable
-private fun BoardWithTiles(boardState: BoardState, stockCount: Int) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Board ends
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            EndBadge(value = boardState.leftEnd, label = "← يسار")
-            StockBadge(count = stockCount, totalTiles = boardState.tiles.size)
-            EndBadge(value = boardState.rightEnd, label = "يمين →")
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        // Tiles
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
-            contentPadding = PaddingValues(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val displayTiles = if (boardState.tiles.size > 8)
-                boardState.tiles.takeLast(8) else boardState.tiles
-            items(displayTiles) { placed ->
-                LuxuryDominoTile(
-                    tile = placed.tile,
-                    isMini = true,
-                    horizontal = true,
-                    modifier = Modifier.size(width = 40.dp, height = 28.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun EndBadge(value: Int?, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            label,
-            fontSize = 10.sp,
-            color = PaleGold.copy(alpha = 0.6f),
-            fontWeight = FontWeight.Medium
-        )
-        Spacer(Modifier.height(2.dp))
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(BrightGold, RoyalGold)
-                    ),
-                    RoundedCornerShape(10.dp)
-                )
-                .border(2.dp, PaleGold, RoundedCornerShape(10.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                "${value ?: "—"}",
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 18.sp,
-                color = DeepForest
-            )
-        }
-    }
-}
-
-@Composable
-private fun StockBadge(count: Int, totalTiles: Int) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-            .border(1.dp, RoyalGold.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Default.Menu,
-            contentDescription = null,
-            tint = RoyalGold,
-            modifier = Modifier.size(14.dp)
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            "$count",
-            color = PaleGold,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            " / $totalTiles",
-            color = PaleGold.copy(alpha = 0.5f),
-            fontSize = 11.sp
-        )
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  LUXURY SIDE SELECTOR
-// ═══════════════════════════════════════════════════════════════════════════
-@Composable
-private fun LuxurySideSelector(
+private fun SideSelector(
     tile: DominoTile,
     onLeft: () -> Unit,
     onRight: () -> Unit,
     onCancel: () -> Unit
 ) {
-    GlassCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(24.dp)
+            .padding(horizontal = 8.dp)
+            .padding(bottom = 6.dp),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = Gold.copy(alpha = 0.1f)),
+        border = BorderStroke(1.dp, Gold)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 7.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(
+                onClick = onLeft,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Gold.copy(alpha = 0.15f)
+                ),
+                border = BorderStroke(1.dp, Gold),
+                shape = RoundedCornerShape(6.dp),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+            ) {
+                Text("← يسار", color = LightGold, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
+
             Text(
-                "اختر الجانب",
-                style = MaterialTheme.typography.titleMedium,
-                color = BrightGold,
-                fontWeight = FontWeight.Bold
+                "[${tile.top}|${tile.bottom}]",
+                color = Gold,
+                fontSize = 12.sp
             )
-            Spacer(Modifier.height(12.dp))
-            LuxuryDominoTile(
-                tile = tile,
-                isSelected = true,
-                modifier = Modifier.size(width = 60.dp, height = 100.dp)
-            )
-            Spacer(Modifier.height(16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                GoldButton(
-                    onClick = onLeft,
-                    text = "← يسار",
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedButton(
-                    onClick = onCancel,
-                    modifier = Modifier.height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PaleGold),
-                    border = BorderStroke(1.dp, PaleGold.copy(alpha = 0.5f))
-                ) {
-                    Text("إلغاء")
-                }
-                GoldButton(
-                    onClick = onRight,
-                    text = "يمين →",
-                    modifier = Modifier.weight(1f)
-                )
+
+            Button(
+                onClick = onRight,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Gold.copy(alpha = 0.15f)
+                ),
+                border = BorderStroke(1.dp, Gold),
+                shape = RoundedCornerShape(6.dp),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+            ) {
+                Text("يمين →", color = LightGold, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
+
+            OutlinedButton(
+                onClick = onCancel,
+                shape = RoundedCornerShape(6.dp),
+                border = BorderStroke(1.dp, Color(0xFF2A3A2E)),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextMuted)
+            ) {
+                Text("✕", fontSize = 11.sp)
             }
         }
     }
 }
 
-@Composable
-private fun GoldButton(
-    onClick: () -> Unit,
-    text: String,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier.height(48.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-        contentPadding = PaddingValues(0.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(GoldGradient, RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text,
-                color = DeepForest,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-            )
-        }
-    }
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
-//  LUXURY PLAYER HAND
+//  PLAYER HAND
 // ═══════════════════════════════════════════════════════════════════════════
 @Composable
-private fun LuxuryPlayerHand(
+private fun PlayerHand(
     player: Player,
+    playerIndex: Int,
     legalSides: (DominoTile) -> Set<BoardSide>,
     selectedTile: DominoTile?,
     onTileClick: (DominoTile) -> Unit,
     onDrawOrPass: () -> Unit,
-    canDraw: Boolean
+    canDraw: Boolean,
+    stockCount: Int
 ) {
-    GlassCard(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp),
-        shape = RoundedCornerShape(20.dp)
+            .padding(horizontal = 8.dp)
+            .padding(top = 7.dp)
+            .border(1.dp, Color(0xFF192D1F))
     ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "🎴",
-                        fontSize = 18.sp
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        "يدك",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = PaleGold,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Box(
-                        modifier = Modifier
-                            .background(RoyalGold.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            "${player.hand.size}",
-                            color = BrightGold,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-                Spacer(Modifier.weight(1f))
-                Text(
-                    "القيمة: ${player.handValue}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = PaleGold.copy(alpha = 0.6f)
+        // Hand header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val color = PlayerColors[playerIndex % PlayerColors.size]
+            Text(
+                text = "${if (player.isAi) "🤖 " else ""}${player.name} (${player.hand.size} قطع)",
+                fontSize = 11.sp,
+                color = color
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = "قيمة اليد: ${player.handValue}",
+                fontSize = 11.sp,
+                color = TextDim
+            )
+        }
+
+        Spacer(Modifier.height(5.dp))
+
+        // Tiles
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            contentPadding = PaddingValues(horizontal = 2.dp)
+        ) {
+            items(player.hand) { tile ->
+                val sides = legalSides(tile)
+                val isLegal = sides.isNotEmpty()
+                val isSelected = selectedTile?.id == tile.id
+
+                DominoTileView(
+                    tile = tile,
+                    isLegal = isLegal,
+                    isSelected = isSelected,
+                    onClick = if (isLegal) { { onTileClick(tile) } } else null,
+                    modifier = Modifier.size(width = 40.dp, height = 80.dp)
                 )
             }
+        }
 
-            Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(7.dp))
 
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                contentPadding = PaddingValues(horizontal = 2.dp)
-            ) {
-                items(player.hand) { tile ->
-                    val sides = legalSides(tile)
-                    val isSelected = selectedTile?.id == tile.id
-                    LuxuryDominoTile(
-                        tile = tile,
-                        isLegal = sides.isNotEmpty(),
-                        isSelected = isSelected,
-                        onClick = if (sides.isNotEmpty()) { { onTileClick(tile) } } else null,
-                        modifier = Modifier.size(width = 48.dp, height = 84.dp)
-                    )
-                }
-            }
+        // Draw / Pass button
+        val noMoves = player.hand.none { legalSides(it).isNotEmpty() }
 
-            Spacer(Modifier.height(12.dp))
-
-            GoldButton(
-                onClick = onDrawOrPass,
-                text = if (canDraw) "🎲  سحب قطعة" else "⏭️  تخطي الدور",
-                modifier = Modifier.fillMaxWidth()
+        Button(
+            onClick = onDrawOrPass,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+            enabled = noMoves,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (noMoves) Gold else Color(0xFF1E2E1E),
+                disabledContainerColor = Color(0xFF1E2E1E)
+            ),
+            contentPadding = PaddingValues(vertical = 9.dp)
+        ) {
+            Text(
+                text = if (stockCount > 0) "سحب قطعة من المخزون ($stockCount)" else "تخطي الدور",
+                color = if (noMoves) DeepGreen else TextDim,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp
             )
         }
     }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  AI THINKING
+//  AI THINKING BAR
 // ═══════════════════════════════════════════════════════════════════════════
 @Composable
-private fun LuxuryAiThinking() {
+private fun AiThinkingBar(currentPlayerName: String) {
     var dotCount by remember { mutableIntStateOf(1) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -1180,27 +862,30 @@ private fun LuxuryAiThinking() {
         }
     }
 
-    GlassCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.6f))
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+            .padding(16.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             CircularProgressIndicator(
                 modifier = Modifier.size(22.dp),
-                color = BrightGold,
+                color = Gold,
                 strokeWidth = 2.5.dp
             )
             Spacer(Modifier.width(12.dp))
             Text(
-                "🤖  AI يحسب أفضل حركة${".".repeat(dotCount)}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = PaleGold
+                "🤖 $currentPlayerName يفكر${".".repeat(dotCount)}",
+                fontSize = 14.sp,
+                color = TextPrimary
             )
         }
     }
@@ -1210,7 +895,7 @@ private fun LuxuryAiThinking() {
 //  ERROR BANNER
 // ═══════════════════════════════════════════════════════════════════════════
 @Composable
-private fun LuxuryErrorBanner(error: String, onDismiss: () -> Unit) {
+private fun ErrorBanner(error: String, onDismiss: () -> Unit) {
     val shake by rememberInfiniteTransition(label = "shake").animateFloat(
         initialValue = -2f,
         targetValue = 2f,
@@ -1221,35 +906,35 @@ private fun LuxuryErrorBanner(error: String, onDismiss: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 12.dp)
             .offset(x = shake.dp)
-            .shadow(8.dp, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
+            .padding(bottom = 6.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFB71C1C).copy(alpha = 0.9f))
     ) {
         Row(
-            Modifier.padding(14.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "⚠️  $error",
-                Modifier.weight(1f),
+                text = "⚠️ $error",
+                modifier = Modifier.weight(1f),
                 color = Color.White,
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium
             )
             TextButton(onClick = onDismiss) {
-                Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("✕", color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  DIALOGS
+//  ROUND RESULT DIALOG
 // ═══════════════════════════════════════════════════════════════════════════
 @Composable
-private fun LuxuryRoundDialog(
+private fun RoundResultDialog(
     gameState: GameState,
     onNextRound: () -> Unit,
     onQuit: () -> Unit
@@ -1258,16 +943,118 @@ private fun LuxuryRoundDialog(
 
     AlertDialog(
         onDismissRequest = {},
-        containerColor = WarmWood,
-        shape = RoundedCornerShape(24.dp),
+        containerColor = CardBg,
+        shape = RoundedCornerShape(16.dp),
         title = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("🎉", fontSize = 40.sp)
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "انتهت الجولة!",
-                    color = BrightGold,
+                    color = Gold,
                     fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+            }
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    gameState.message,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center
+                )
+
+                if (lastRound != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = Gold.copy(alpha = 0.15f)
+                        ),
+                        border = BorderStroke(1.dp, Gold),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            "+${lastRound.pointsEarned} نقطة",
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                            color = LightGold,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 20.sp
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "النتيجة:",
+                    color = Gold,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+
+                gameState.players.forEach { player ->
+                    val color = PlayerColors[player.id % PlayerColors.size]
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(player.name, color = TextMuted)
+                        Text(
+                            "${gameState.matchScore.playerScore(player.id)} نقطة",
+                            color = color,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onNextRound,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Gold)
+            ) {
+                Text("▶ جولة تالية", color = DeepGreen, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onQuit) {
+                Text("خروج", color = TextMuted)
+            }
+        }
+    )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MATCH RESULT DIALOG
+// ═══════════════════════════════════════════════════════════════════════════
+@Composable
+private fun MatchResultDialog(
+    gameState: GameState,
+    onRematch: () -> Unit,
+    onQuit: () -> Unit
+) {
+    val winnerId = gameState.matchScore.matchWinnerId
+    val winner = winnerId?.let { id -> gameState.players.find { it.id == id } }
+
+    AlertDialog(
+        onDismissRequest = {},
+        containerColor = CardBg,
+        shape = RoundedCornerShape(16.dp),
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("🏆", fontSize = 48.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "انتهت المباراة!",
+                    color = Gold,
+                    fontWeight = FontWeight.Black,
                     fontSize = 22.sp
                 )
             }
@@ -1278,143 +1065,56 @@ private fun LuxuryRoundDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    gameState.message,
-                    color = PaleGold,
+                    winner?.name ?: "تعادل!",
+                    color = TextPrimary,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center
+                    fontSize = 20.sp
                 )
-                if (lastRound != null) {
-                    Spacer(Modifier.height(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .background(RoyalGold.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                            .border(1.dp, RoyalGold, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 24.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            "+${lastRound.pointsEarned} نقطة",
-                            color = BrightGold,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 24.sp
-                        )
-                    }
-                }
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    "النتيجة الحالية:",
-                    color = RoyalGold,
-                    fontWeight = FontWeight.Bold
-                )
-                gameState.players.forEach { player ->
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(player.displayName(), color = PaleGold)
-                        Text(
-                            "${gameState.matchScore.playerScore(player.id)} نقطة",
-                            color = BrightGold,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            GoldButton(onClick = onNextRound, text = "▶  جولة تالية", modifier = Modifier.fillMaxWidth())
-        },
-        dismissButton = {
-            TextButton(onClick = onQuit) {
-                Text("خروج", color = PaleGold.copy(alpha = 0.8f))
-            }
-        }
-    )
-}
-
-@Composable
-private fun LuxuryMatchDialog(
-    gameState: GameState,
-    onRematch: () -> Unit,
-    onQuit: () -> Unit
-) {
-    val winnerId = gameState.matchScore.matchWinnerId
-    val winner = winnerId?.let { gameState.players.getOrNull(it) }
-
-    AlertDialog(
-        onDismissRequest = {},
-        containerColor = WarmWood,
-        shape = RoundedCornerShape(24.dp),
-        title = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("🏆", fontSize = 48.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "انتهت المباراة!",
-                    color = BrightGold,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 24.sp
-                )
-            }
-        },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(RoyalGold.copy(alpha = 0.3f), Color.Transparent)
-                            ),
-                            CircleShape
-                        )
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        winner?.displayName() ?: "تعادل!",
-                        color = BrightGold,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 26.sp
-                    )
-                }
                 Text(
                     if (winner != null) "فاز بالمباراة!" else "لا يوجد فائز",
-                    color = PaleGold.copy(alpha = 0.8f),
-                    fontSize = 16.sp
+                    color = TextMuted,
+                    fontSize = 14.sp
                 )
-                Spacer(Modifier.height(12.dp))
+
+                Spacer(Modifier.height(8.dp))
                 Text(
                     "الترتيب النهائي:",
-                    color = RoyalGold,
+                    color = Gold,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    fontSize = 14.sp
                 )
-                gameState.matchScore.leaderboard.forEachIndexed { i, (playerId, score) ->
-                    val player = gameState.players.getOrNull(playerId)
-                    val medal = when (i) {
+
+                gameState.matchScore.leaderboard.forEachIndexed { index, (playerId, score) ->
+                    val player = gameState.players.find { it.id == playerId }
+                    val color = PlayerColors[playerId % PlayerColors.size]
+                    val medal = when (index) {
                         0 -> "🥇"
                         1 -> "🥈"
-                        else -> "🥉"
+                        2 -> "🥉"
+                        else -> "4️⃣"
                     }
+
                     Row(
-                        Modifier
+                        modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                if (i == 0) RoyalGold.copy(alpha = 0.15f) else Color.Transparent,
-                                RoundedCornerShape(8.dp)
+                                if (index == 0) Gold.copy(alpha = 0.1f) else Color.Transparent,
+                                RoundedCornerShape(6.dp)
                             )
                             .padding(horizontal = 8.dp, vertical = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            "$medal ${player?.displayName() ?: "لاعب"}",
-                            color = if (i == 0) BrightGold else PaleGold
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(medal, fontSize = 14.sp)
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                player?.name ?: "لاعب",
+                                color = if (index == 0) Gold else TextPrimary
+                            )
+                        }
                         Text(
                             "$score نقطة",
-                            color = if (i == 0) BrightGold else PaleGold,
+                            color = if (index == 0) Gold else color,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -1422,15 +1122,18 @@ private fun LuxuryMatchDialog(
             }
         },
         confirmButton = {
-            GoldButton(
+            Button(
                 onClick = onRematch,
-                text = "🔄  مباراة جديدة",
-                modifier = Modifier.fillMaxWidth()
-            )
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Gold)
+            ) {
+                Text("🔄 مباراة جديدة", color = DeepGreen, fontWeight = FontWeight.Bold)
+            }
         },
         dismissButton = {
             TextButton(onClick = onQuit) {
-                Text("القائمة الرئيسية", color = PaleGold.copy(alpha = 0.8f))
+                Text("القائمة", color = TextMuted)
             }
         }
     )
