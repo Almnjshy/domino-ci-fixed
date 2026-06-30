@@ -1,5 +1,6 @@
 package com.agon.app.presentation.screens
 
+import androidx.compose.ui.unit.Dp
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
