@@ -28,7 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// 鈹€鈹€ Colors 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ══ Colors ════════════════════════════════════════════════════════════════
 private val FeltDark = Color(0xFF0D3B10)
 private val FeltGreen = Color(0xFF1B5E20)
 private val FeltLight = Color(0xFF2E7D32)
@@ -66,7 +66,7 @@ fun PlayScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 鈹€鈹€ Top Bar 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+            // ══ Top Bar ════════════════════════════════════════════════════════
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -74,7 +74,7 @@ fun PlayScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         Icons.Default.ArrowBack,
-                        contentDescription = "乇噩賵毓",
+                        contentDescription = "رجوع",
                         tint = Color.White,
                         modifier = Modifier.size(28.dp)
                     )
@@ -84,14 +84,14 @@ fun PlayScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // 鈹€鈹€ Title 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+            // ══ Title ═══════════════════════════════════════════════════════════
             GameTitle()
 
             Spacer(Modifier.height(40.dp))
 
-            // 鈹€鈹€ Game Modes 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+            // ══ Game Modes ══════════════════════════════════════════════════════
             Text(
-                "丕禺鬲乇 賵囟毓 丕賱賱毓亘",
+                "اختر وضع اللعب",
                 style = MaterialTheme.typography.headlineSmall,
                 color = GoldAccent,
                 fontWeight = FontWeight.Bold,
@@ -102,10 +102,10 @@ fun PlayScreen(
 
             // Mode Cards
             GameModeCard(
-                title = "囟丿 丕賱匕賰丕亍 丕賱丕氐胤賳丕毓賷",
-                subtitle = "鬲丨丿賶 丕賱賰賲亘賷賵鬲乇 賮賷 賲亘丕乇丕丞 賰賱丕爻賷賰賷丞",
+                title = "ضد الذكاء الاصطناعي",
+                subtitle = "تحدي الكمبيوتر في مباراة كلاسيكية",
                 icon = Icons.Default.Computer,
-                iconEmoji = "馃",
+                iconEmoji = "🤖",
                 colors = listOf(Color(0xFF1565C0), Color(0xFF0D47A1)),
                 onClick = onVsAi
             )
@@ -113,10 +113,10 @@ fun PlayScreen(
             Spacer(Modifier.height(12.dp))
 
             GameModeCard(
-                title = "賱丕毓亘 囟丿 賱丕毓亘",
-                subtitle = "鬲丨丿賶 氐丿賷賯賰 毓賱賶 賳賮爻 丕賱噩賴丕夭",
+                title = "لاعب ضد لاعب",
+                subtitle = "تحدي صديقك على نفس الجهاز",
                 icon = Icons.Default.Person,
-                iconEmoji = "馃懃",
+                iconEmoji = "👤",
                 colors = listOf(Color(0xFF6A1B9A), Color(0xFF4A148C)),
                 onClick = onVsPlayer
             )
@@ -124,10 +124,10 @@ fun PlayScreen(
             Spacer(Modifier.height(12.dp))
 
             GameModeCard(
-                title = "丕賱賱毓亘 毓亘乇 丕賱卮亘賰丞",
-                subtitle = "鬲賵丕氐賱 賲毓 丕賱兀氐丿賯丕亍 毓亘乇 WiFi",
+                title = "اللعب عبر الشبكة",
+                subtitle = "تواصل مع الأصدقاء عبر WiFi",
                 icon = Icons.Default.Wifi,
-                iconEmoji = "馃摱",
+                iconEmoji = "📶",
                 colors = listOf(Color(0xFF2E7D32), Color(0xFF1B5E20)),
                 onClick = onNetwork,
                 isNew = true
@@ -136,25 +136,25 @@ fun PlayScreen(
             Spacer(Modifier.height(12.dp))
 
             GameModeCard(
-                title = "亘胤賵賱丞",
-                subtitle = "鬲賳丕賮爻 賮賷 亘胤賵賱丞 賲鬲毓丿丿丞 丕賱噩賵賱丕鬲",
+                title = "بطولة",
+                subtitle = "تنافس في بطولة متعددة الجولات",
                 icon = Icons.Default.Group,
-                iconEmoji = "馃弳",
+                iconEmoji = "🏆",
                 colors = listOf(Color(0xFFE65100), Color(0xFFBF360C)),
                 onClick = onTournament
             )
 
             Spacer(Modifier.weight(1f))
 
-            // 鈹€鈹€ Bottom Decoration 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+            // ══ Bottom Decoration ═══════════════════════════════════════════════
             DominoRowDecoration()
         }
     }
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ═══════════════════════════════════════════════════════════════════════════
 // Game Title
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun GameTitle() {
@@ -181,7 +181,7 @@ private fun GameTitle() {
         )
 
         Text(
-            "丿賵賲賷賳賵",
+            "دومينو",
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White,
             fontWeight = FontWeight.Bold,
@@ -198,9 +198,9 @@ private fun GameTitle() {
     }
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ═══════════════════════════════════════════════════════════════════════════
 // Game Mode Card
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun GameModeCard(
@@ -285,7 +285,7 @@ private fun GameModeCard(
 
                 // Arrow
                 Text(
-                    "鈻�",
+                    "❯",
                     color = GoldAccent,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
@@ -303,7 +303,7 @@ private fun NewBadge() {
             .padding(horizontal = 8.dp, vertical = 2.dp)
     ) {
         Text(
-            "噩丿賷丿!",
+            "جديد!",
             color = FeltDark,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold
@@ -311,9 +311,9 @@ private fun NewBadge() {
     }
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ═══════════════════════════════════════════════════════════════════════════
 // Domino Icon Tile (for title)
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun DominoIconTile(top: Int, bottom: Int, size: Int) {
@@ -379,9 +379,9 @@ private fun MiniDot(size: androidx.compose.ui.unit.Dp) {
     )
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ═══════════════════════════════════════════════════════════════════════════
 // Background Decorations
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun BackgroundDecorations() {
@@ -414,9 +414,9 @@ private fun DominoDecoration(modifier: Modifier) {
     }
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ═══════════════════════════════════════════════════════════════════════════
 // Bottom Domino Row
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun DominoRowDecoration() {
@@ -433,10 +433,9 @@ private fun DominoRowDecoration() {
                 initialValue = 0f,
                 targetValue = -8f,
                 animationSpec = infiniteRepeatable(
-    animation = tween(2000, delayMillis = index * 200),
-    repeatMode = RepeatMode.Reverse
-)
-
+                    animation = tween(2000, delayMillis = index * 200),
+                    repeatMode = RepeatMode.Reverse
+                ),
                 label = "offset"
             )
             Box(modifier = Modifier.offset(y = offset.dp)) {
