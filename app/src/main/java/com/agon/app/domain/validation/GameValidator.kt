@@ -17,25 +17,27 @@ class GameValidator {
     }
 
     fun validatePlayTile(state: GameState, tile: DominoTile, side: BoardSide): Result<Unit> {
+        val currentPlayer = state.currentPlayer
         return when {
             state.roundOver -> Result.failure(IllegalStateException("Game is already over"))
             state.isBlocked -> Result.failure(IllegalStateException("Game is blocked"))
-            state.currentPlayer == null -> Result.failure(IllegalStateException("No current player"))
-            state.currentPlayer.isAi -> Result.failure(IllegalStateException("AI player's turn"))
-            !state.currentPlayer.hand.any { it.id == tile.id } -> 
+            currentPlayer == null -> Result.failure(IllegalStateException("No current player"))
+            currentPlayer.isAi -> Result.failure(IllegalStateException("AI player's turn"))
+            !currentPlayer.hand.any { it.id == tile.id } ->
                 Result.failure(IllegalArgumentException("Player doesn't have this tile"))
-            side !in state.board.getLegalSides(tile) -> 
+            side !in state.board.getLegalSides(tile) ->
                 Result.failure(IllegalArgumentException("Illegal move for this tile"))
             else -> Result.success(Unit)
         }
     }
 
     fun validateDrawOrPass(state: GameState): Result<Unit> {
+        val currentPlayer = state.currentPlayer
         return when {
             state.roundOver -> Result.failure(IllegalStateException("Game is already over"))
             state.isBlocked -> Result.failure(IllegalStateException("Game is blocked"))
-            state.currentPlayer == null -> Result.failure(IllegalStateException("No current player"))
-            state.currentPlayer.isAi -> Result.failure(IllegalStateException("AI player's turn"))
+            currentPlayer == null -> Result.failure(IllegalStateException("No current player"))
+            currentPlayer.isAi -> Result.failure(IllegalStateException("AI player's turn"))
             else -> Result.success(Unit)
         }
     }
@@ -52,7 +54,7 @@ class GameValidator {
         return when {
             state.players.isEmpty() -> ValidationResult.Invalid("No players in game")
             state.players.any { it.hand.size > 7 } -> ValidationResult.Invalid("Player has too many tiles")
-            state.stock.size + state.players.sumOf { it.hand.size } + state.board.tiles.size != 28 -> 
+            state.stock.size + state.players.sumOf { it.hand.size } + state.board.tiles.size != 28 ->
                 ValidationResult.Invalid("Tile count mismatch")
             else -> ValidationResult.Valid
         }
@@ -60,7 +62,7 @@ class GameValidator {
 
     fun validatePlayerTurn(state: GameState, playerId: Int): Result<Unit> {
         return when {
-            state.currentPlayerIndex != playerId -> 
+            state.currentPlayerIndex != playerId ->
                 Result.failure(IllegalStateException("Not player's turn"))
             else -> Result.success(Unit)
         }
