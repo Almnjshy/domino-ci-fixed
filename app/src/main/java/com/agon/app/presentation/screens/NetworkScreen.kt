@@ -16,6 +16,7 @@ import com.agon.app.domain.model.NetworkRoom
 import com.agon.app.domain.model.NetworkState
 import com.agon.app.domain.model.NetworkStatus
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NetworkScreen(
     networkState: NetworkState,
@@ -41,10 +42,10 @@ fun NetworkScreen(
 
         // Top bar
         TopAppBar(
-            title = { Text("اللعب عبر الشبكة") },
+            title = { Text("丕賱賱毓亘 毓亘乇 丕賱卮亘賰丞") },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, "رجوع")
+                    Icon(Icons.Default.ArrowBack, "乇噩賵毓")
                 }
             }
         )
@@ -57,12 +58,12 @@ fun NetworkScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(Modifier.padding(12.dp)) {
-                    Text("كيف يعمل؟", fontWeight = FontWeight.Bold)
+                    Text("賰賷賮 賷毓賲賱責", fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
-                    Text("📶 تأكد أن جميع الأجهزة على نفس الـ WiFi أو Hotspot")
-                    Text("🏠 شخص واحد ينشئ غرفة")
-                    Text("👥 الباقون يبحثون عن الغرفة وينضمون")
-                    Text("🎮 المضيف يبدأ اللعبة")
+                    Text("馃摱 鬲兀賰丿 兀賳 噩賲賷毓 丕賱兀噩賴夭丞 毓賱賶 賳賮爻 丕賱賭 WiFi 兀賵 Hotspot")
+                    Text("馃彔 卮禺氐 賵丕丨丿 賷賳卮卅 睾乇賮丞")
+                    Text("馃懃 丕賱亘丕賯賵賳 賷亘丨孬賵賳 毓賳 丕賱睾乇賮丞 賵賷賳囟賲賵賳")
+                    Text("馃幃 丕賱賲囟賷賮 賷亘丿兀 丕賱賱毓亘丞")
                 }
             }
 
@@ -79,11 +80,11 @@ fun NetworkScreen(
             Text(
                 text = statusMessage.ifBlank {
                     when (networkState.status) {
-                        NetworkStatus.CONNECTED -> "✅ متصل: ${networkState.roomName}"
-                        NetworkStatus.CONNECTING -> "⏳ جاري الاتصال..."
-                        NetworkStatus.SYNCING -> "🔍 جاري البحث..."
-                        NetworkStatus.ERROR -> "❌ خطأ"
-                        else -> "⭕ غير متصل"
+                        NetworkStatus.CONNECTED -> "鉁� 賲鬲氐賱: ${networkState.roomName}"
+                        NetworkStatus.CONNECTING -> "鈴� 噩丕乇賷 丕賱丕鬲氐丕賱..."
+                        NetworkStatus.SYNCING -> "馃攳 噩丕乇賷 丕賱亘丨孬..."
+                        NetworkStatus.ERROR -> "鉂� 禺胤兀"
+                        else -> "猸� 睾賷乇 賲鬲氐賱"
                     }
                 },
                 color = statusColor,
@@ -98,7 +99,7 @@ fun NetworkScreen(
                 OutlinedTextField(
                     value = playerName,
                     onValueChange = { playerName = it },
-                    label = { Text("اسمك في اللعبة") },
+                    label = { Text("丕爻賲賰 賮賷 丕賱賱毓亘丞") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -110,7 +111,7 @@ fun NetworkScreen(
                         onClick = onShowCreateDialog,
                         modifier = Modifier.weight(1f),
                         enabled = !isLoading
-                    ) { Text("🏠 أنشئ غرفة") }
+                    ) { Text("馃彔 兀賳卮卅 睾乇賮丞") }
 
                     OutlinedButton(
                         onClick = onDiscover,
@@ -119,7 +120,7 @@ fun NetworkScreen(
                     ) {
                         Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("🔍 ابحث")
+                        Text("馃攳 丕亘丨孬")
                     }
                 }
 
@@ -130,14 +131,14 @@ fun NetworkScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator()
                             Spacer(Modifier.height(8.dp))
-                            Text("جاري البحث... (3 ثواني)", style = MaterialTheme.typography.bodySmall)
+                            Text("噩丕乇賷 丕賱亘丨孬... (3 孬賵丕賳賷)", style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
 
                 // Rooms list
                 if (discoveredRooms.isNotEmpty()) {
-                    Text("الغرف المتاحة:", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("丕賱睾乇賮 丕賱賲鬲丕丨丞:", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(8.dp))
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(discoveredRooms) { room ->
@@ -153,8 +154,8 @@ fun NetworkScreen(
                 } else if (!isLoading) {
                     Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("📡", style = MaterialTheme.typography.displaySmall)
-                            Text("لا توجد غرف — اضغط بحث",
+                            Text("馃摗", style = MaterialTheme.typography.displaySmall)
+                            Text("賱丕 鬲賵噩丿 睾乇賮 鈥� 丕囟睾胤 亘丨孬",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -174,7 +175,7 @@ fun NetworkScreen(
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
                     Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(error, Modifier.weight(1f), color = MaterialTheme.colorScheme.onErrorContainer)
-                        TextButton(onClick = onClearError) { Text("✕") }
+                        TextButton(onClick = onClearError) { Text("鉁�") }
                     }
                 }
             }
@@ -183,12 +184,12 @@ fun NetworkScreen(
             if (roomToJoin != null) {
                 AlertDialog(
                     onDismissRequest = { roomToJoin = null },
-                    title = { Text("أدخل اسمك") },
+                    title = { Text("兀丿禺賱 丕爻賲賰") },
                     text = {
                         OutlinedTextField(
                             value = playerName,
                             onValueChange = { playerName = it },
-                            label = { Text("اسمك") },
+                            label = { Text("丕爻賲賰") },
                             singleLine = true
                         )
                     },
@@ -196,9 +197,9 @@ fun NetworkScreen(
                         Button(onClick = {
                             onJoinRoom(roomToJoin!!, playerName)
                             roomToJoin = null
-                        }, enabled = playerName.isNotBlank()) { Text("انضمام") }
+                        }, enabled = playerName.isNotBlank()) { Text("丕賳囟賲丕賲") }
                     },
-                    dismissButton = { TextButton(onClick = { roomToJoin = null }) { Text("إلغاء") } }
+                    dismissButton = { TextButton(onClick = { roomToJoin = null }) { Text("廿賱睾丕亍") } }
                 )
             }
         }
@@ -208,15 +209,15 @@ fun NetworkScreen(
     if (showCreateDialog) {
         AlertDialog(
             onDismissRequest = onDismissCreateDialog,
-            title = { Text("🏠 إنشاء غرفة جديدة") },
+            title = { Text("馃彔 廿賳卮丕亍 睾乇賮丞 噩丿賷丿丞") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("سيتمكن الأصدقاء على نفس الـ WiFi من رؤية غرفتك والانضمام إليها.")
+                    Text("爻賷鬲賲賰賳 丕賱兀氐丿賯丕亍 毓賱賶 賳賮爻 丕賱賭 WiFi 賲賳 乇丐賷丞 睾乇賮鬲賰 賵丕賱丕賳囟賲丕賲 廿賱賷賴丕.")
                     OutlinedTextField(
                         value = createRoomName,
                         onValueChange = { createRoomName = it },
-                        label = { Text("اسم الغرفة") },
-                        placeholder = { Text("مثال: غرفة فيصل") },
+                        label = { Text("丕爻賲 丕賱睾乇賮丞") },
+                        placeholder = { Text("賲孬丕賱: 睾乇賮丞 賮賷氐賱") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -226,9 +227,9 @@ fun NetworkScreen(
                 Button(
                     onClick = { onCreateRoom(createRoomName); createRoomName = "" },
                     enabled = createRoomName.isNotBlank()
-                ) { Text("إنشاء") }
+                ) { Text("廿賳卮丕亍") }
             },
-            dismissButton = { TextButton(onClick = onDismissCreateDialog) { Text("إلغاء") } }
+            dismissButton = { TextButton(onClick = onDismissCreateDialog) { Text("廿賱睾丕亍") } }
         )
     }
 }
@@ -243,9 +244,9 @@ private fun RoomCard(room: NetworkRoom, onJoin: () -> Unit) {
         ) {
             Column {
                 Text(room.name, fontWeight = FontWeight.Bold)
-                Text("المضيف: ${room.hostName}", style = MaterialTheme.typography.bodySmall)
+                Text("丕賱賲囟賷賮: ${room.hostName}", style = MaterialTheme.typography.bodySmall)
                 Text(
-                    "${room.currentPlayers}/${room.maxPlayers} لاعب",
+                    "${room.currentPlayers}/${room.maxPlayers} 賱丕毓亘",
                     style = MaterialTheme.typography.bodySmall,
                     color = if (room.currentPlayers < room.maxPlayers)
                         MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
@@ -254,7 +255,7 @@ private fun RoomCard(room: NetworkRoom, onJoin: () -> Unit) {
             Button(
                 onClick = onJoin,
                 enabled = room.currentPlayers < room.maxPlayers
-            ) { Text("انضمام") }
+            ) { Text("丕賳囟賲丕賲") }
         }
     }
 }
@@ -266,26 +267,26 @@ private fun ConnectedView(networkState: NetworkState, onLeave: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text("الغرفة: ${networkState.roomName}", fontWeight = FontWeight.Bold)
-            Text(if (networkState.isHost) "أنت المضيف" else "لاعب",
+            Text("丕賱睾乇賮丞: ${networkState.roomName}", fontWeight = FontWeight.Bold)
+            Text(if (networkState.isHost) "兀賳鬲 丕賱賲囟賷賮" else "賱丕毓亘",
                 style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(8.dp))
-            Text("اللاعبون المتصلون:", fontWeight = FontWeight.Medium)
+            Text("丕賱賱丕毓亘賵賳 丕賱賲鬲氐賱賵賳:", fontWeight = FontWeight.Medium)
             networkState.connectedPlayers.forEach { player ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (player.isHost) "👑" else "👤")
+                    Text(if (player.isHost) "馃憫" else "馃懁")
                     Spacer(Modifier.width(4.dp))
                     Text(player.name)
                     if (player.isReady) {
                         Spacer(Modifier.width(4.dp))
-                        Text("✅", style = MaterialTheme.typography.labelSmall)
+                        Text("鉁�", style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
             Spacer(Modifier.height(12.dp))
             if (networkState.isHost) {
                 Text(
-                    "في انتظار اللاعبين... (${networkState.playerCount}/${4})",
+                    "賮賷 丕賳鬲馗丕乇 丕賱賱丕毓亘賷賳... (${networkState.playerCount}/${4})",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -293,5 +294,5 @@ private fun ConnectedView(networkState: NetworkState, onLeave: () -> Unit) {
         }
     }
     Spacer(Modifier.height(12.dp))
-    OutlinedButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) { Text("مغادرة الغرفة") }
+    OutlinedButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) { Text("賲睾丕丿乇丞 丕賱睾乇賮丞") }
 }
