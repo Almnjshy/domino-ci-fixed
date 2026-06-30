@@ -139,17 +139,20 @@ class DominoGameEngine @Inject constructor(
         )
     }
 
-    private fun validatePlayTile(state: GameState, tile: DominoTile, side: BoardSide): Result<Unit> =
-        when {
+    // FIX: Assign currentPlayer to local val to avoid smart cast issues
+    private fun validatePlayTile(state: GameState, tile: DominoTile, side: BoardSide): Result<Unit> {
+        val currentPlayer = state.currentPlayer
+        return when {
             state.roundOver -> Result.failure(IllegalStateException("الجولة انتهت"))
             state.isBlocked -> Result.failure(IllegalStateException("اللعبة موقوفة"))
-            state.currentPlayer == null -> Result.failure(IllegalStateException("لا يوجد لاعب حالي"))
-            state.currentPlayer.hand.none { it.id == tile.id } ->
+            currentPlayer == null -> Result.failure(IllegalStateException("لا يوجد لاعب حالي"))
+            currentPlayer.hand.none { it.id == tile.id } ->
                 Result.failure(IllegalArgumentException("اللاعب لا يملك هذه القطعة"))
             side !in state.board.getLegalSides(tile) ->
                 Result.failure(IllegalArgumentException("حركة غير قانونية: ${tile} في جانب $side"))
             else -> Result.success(Unit)
         }
+    }
 
     private fun checkRoundEnd(state: GameState, lastPlayer: Player): GameState {
         // Case 1: player emptied hand → wins round
