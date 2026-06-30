@@ -65,7 +65,7 @@ object GameStateSerializer {
     }
 
     private fun boardFromJson(obj: JSONObject): BoardState {
-        val tiles = mutableListOf<PlacedTile>()
+        val tiles = mutableListOf<BoardState.PlacedTile>()
         val arr = obj.getJSONArray("tiles")
         for (i in 0 until arr.length()) {
             val t = arr.getJSONObject(i)
