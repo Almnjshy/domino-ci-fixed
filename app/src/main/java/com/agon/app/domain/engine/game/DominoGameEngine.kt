@@ -10,7 +10,7 @@ import javax.inject.Singleton
  * This makes it fully testable, thread-safe, and network-ready.
  *
  * Pattern: Redux-style reducer
- *   fun reduce(state: GameState, action: GameAction): Result<GameState>
+ * fun reduce(state: GameState, action: GameAction): Result<GameState>
  */
 @Singleton
 class DominoGameEngine @Inject constructor(
@@ -69,7 +69,8 @@ class DominoGameEngine @Inject constructor(
         val validation = validatePlayTile(state, action.tile, action.side)
         if (validation.isFailure) return Result.failure(validation.exceptionOrNull()!!)
 
-        val player = state.currentPlayer!!
+        val player = state.currentPlayer
+            ?: return Result.failure(IllegalStateException("لا يوجد لاعب حالي"))
         val newBoard = state.board.place(action.tile, action.side)
         val updatedPlayer = player.withoutTile(action.tile)
         val updatedPlayers = state.players.map { if (it.id == player.id) updatedPlayer else it }
