@@ -15,9 +15,9 @@ import javax.inject.Singleton
  * Works over WiFi or Mobile Hotspot — no internet required.
  *
  * Flow:
- *  HOST: createRoom() → NsdGameServer starts → broadcasts NSD → accepts connections
- *  CLIENT: discoverRooms() → NsdGameClient discovers → joinRoom() → TCP connect
- *  BOTH: sendGameAction() → TCP → other devices receive → GameState updates
+ * HOST: createRoom() → NsdGameServer starts → broadcasts NSD → accepts connections
+ * CLIENT: discoverRooms() → NsdGameClient discovers → joinRoom() → TCP connect
+ * BOTH: sendGameAction() → TCP → other devices receive → GameState updates
  */
 @Singleton
 class NetworkRepositoryImpl @Inject constructor(
@@ -65,7 +65,6 @@ class NetworkRepositoryImpl @Inject constructor(
                 roomId = roomName, roomName = roomName,
                 connectedPlayers = listOf(hostPlayer),
                 localPlayerId = localPlayerId,
-                playerCount = 1,
                 status = NetworkStatus.CONNECTED
             )
             _networkState.value = newState
@@ -138,7 +137,6 @@ class NetworkRepositoryImpl @Inject constructor(
                 roomId = room.id, roomName = room.name,
                 connectedPlayers = listOf(localPlayer),
                 localPlayerId = localPlayerId,
-                playerCount = room.currentPlayers + 1,
                 status = NetworkStatus.CONNECTED
             )
             _networkState.value = newState
@@ -197,7 +195,7 @@ class NetworkRepositoryImpl @Inject constructor(
 
     override suspend fun disconnect(): Result<Unit> = leaveRoom()
 
-    override suspend fun reconnect(): Result<NetworkState> {
+    override suspend fun reconnect(): Result<Unit> {
         _networkState.value = _networkState.value.copy(status = NetworkStatus.RECONNECTING)
         return Result.failure(UnsupportedOperationException("أعد الاتصال يدوياً"))
     }
@@ -222,15 +220,14 @@ class NetworkRepositoryImpl @Inject constructor(
                 val current = _networkState.value
                 val updatedPlayers = current.connectedPlayers + newPlayer
                 _networkState.value = current.copy(
-                    connectedPlayers = updatedPlayers,
-                    playerCount = updatedPlayers.size
+                    connectedPlayers = updatedPlayers
                 )
                 _events.emit(NetworkEvent.PlayerJoined(newPlayer))
             }
             is NetworkPacket.PlayerDisconnected -> {
                 val current = _networkState.value
                 val updated = current.connectedPlayers.filter { it.id != packet.id }
-                _networkState.value = current.copy(connectedPlayers = updated, playerCount = updated.size)
+                _networkState.value = current.copy(connectedPlayers = updated)
                 _events.emit(NetworkEvent.PlayerLeft(packet.id))
             }
             is NetworkPacket.ActionReceived -> {
