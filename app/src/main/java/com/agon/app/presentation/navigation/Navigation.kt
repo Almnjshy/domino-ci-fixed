@@ -22,6 +22,7 @@ import com.agon.app.presentation.screens.DemoScreen
 import com.agon.app.presentation.screens.GameScreen
 import com.agon.app.presentation.screens.MainMenuScreen
 import com.agon.app.presentation.screens.NetworkScreen
+import com.agon.app.presentation.screens.PlayScreen
 import com.agon.app.presentation.screens.SettingsScreen
 import com.agon.app.presentation.screens.SplashScreen
 import com.agon.app.presentation.screens.StatsScreen
@@ -36,6 +37,7 @@ import com.agon.app.presentation.viewmodel.StatsViewModel
 sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Menu : Screen("menu")
+    data object Play : Screen("play")  // NEW: Play mode selection screen
     data object Game : Screen("game/{mode}") {
         fun createRoute(mode: GameMode) = "game/${mode.name}"
     }
@@ -50,6 +52,7 @@ sealed class Screen(val route: String) {
             route == null -> Splash
             route.startsWith("game/") -> Game
             route == "menu" -> Menu
+            route == "play" -> Play  // NEW
             route == "network" -> Network
             route == "settings" -> Settings
             route == "stats" -> Stats
@@ -73,6 +76,7 @@ fun DominoNavigation(
         if (uri != null) {
             when (uri.path) {
                 "/menu" -> navController.navigate(Screen.Menu.route) { popUpTo(0) }
+                "/play" -> navController.navigate(Screen.Play.route) { popUpTo(0) }  // NEW
                 "/game" -> {
                     val mode = uri.getQueryParameter("mode")?.let {
                         try { GameMode.valueOf(it.uppercase()) } catch (e: Exception) { null }
@@ -137,13 +141,45 @@ fun DominoNavigation(
                 isLoading = state.isLoading,
                 error = state.error,
                 onModeSelected = { viewModel.selectMode(it) },
-                onNewGame = { navController.navigate(Screen.Game.createRoute(state.selectedMode)) },
+                // CHANGED: Navigate to PlayScreen instead of directly to Game
+                onNewGame = { navController.navigate(Screen.Play.route) },
                 onNetwork = { navController.navigate(Screen.Network.route) },
                 onSettings = { navController.navigate(Screen.Settings.route) },
                 onStats = { navController.navigate(Screen.Stats.route) },
                 onVerify = { navController.navigate(Screen.Verify.route) },
                 onDemo = { navController.navigate(Screen.Demo.route) },
                 onClearError = { viewModel.clearError() }
+            )
+        }
+
+        // NEW: PlayScreen composable
+        composable(
+            route = Screen.Play.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "domino://play" })
+        ) {
+            PlayScreen(
+                onVsAi = {
+                    navController.navigate(Screen.Game.createRoute(GameMode.HUMAN_VS_AI)) {
+                        popUpTo(Screen.Play.route) { inclusive = true }
+                    }
+                },
+                onVsPlayer = {
+                    navController.navigate(Screen.Game.createRoute(GameMode.HUMAN_VS_HUMAN)) {
+                        popUpTo(Screen.Play.route) { inclusive = true }
+                    }
+                },
+                onNetwork = {
+                    navController.navigate(Screen.Network.route) {
+                        popUpTo(Screen.Play.route) { inclusive = true }
+                    }
+                },
+                onTournament = {
+                    // For now, tournament goes to AI mode (can be changed later)
+                    navController.navigate(Screen.Game.createRoute(GameMode.HUMAN_VS_AI)) {
+                        popUpTo(Screen.Play.route) { inclusive = true }
+                    }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 
