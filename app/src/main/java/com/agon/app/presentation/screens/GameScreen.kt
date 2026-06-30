@@ -1172,13 +1172,13 @@ private fun LuxuryPlayerHand(
 // ═══════════════════════════════════════════════════════════════════════════
 @Composable
 private fun LuxuryAiThinking() {
-    val infiniteTransition = rememberInfiniteTransition(label = "ai")
-    val dotCount by infiniteTransition.animateInt(
-        initialValue = 1,
-        targetValue = 3,
-        animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
-        label = "dots"
-    )
+    var dotCount by remember { mutableIntStateOf(1) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(400)
+            dotCount = if (dotCount >= 3) 1 else dotCount + 1
+        }
+    }
 
     GlassCard(
         modifier = Modifier
