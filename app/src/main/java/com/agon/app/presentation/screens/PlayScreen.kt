@@ -433,9 +433,10 @@ private fun DominoRowDecoration() {
                 initialValue = 0f,
                 targetValue = -8f,
                 animationSpec = infiniteRepeatable(
-                    animation = tween(2000, delayStart = index * 200),
-                    repeatMode = RepeatMode.Reverse
-                ),
+    animation = tween(2000, delayMillis = index * 200),
+    repeatMode = RepeatMode.Reverse
+)
+
                 label = "offset"
             )
             Box(modifier = Modifier.offset(y = offset.dp)) {
