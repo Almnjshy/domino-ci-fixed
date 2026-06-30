@@ -450,6 +450,3 @@ private fun DominoRowDecoration() {
 }
 
 // Helper extension
-private fun Modifier.alpha(alpha: Float): Modifier = this.then(
-    androidx.compose.ui.draw.alpha(alpha)
-)
