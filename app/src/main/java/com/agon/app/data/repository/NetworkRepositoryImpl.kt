@@ -195,7 +195,8 @@ class NetworkRepositoryImpl @Inject constructor(
 
     override suspend fun disconnect(): Result<Unit> = leaveRoom()
 
-    override suspend fun reconnect(): Result<Unit> {
+    // FIX: Changed return type from Result<Unit> to Result<NetworkState>
+    override suspend fun reconnect(): Result<NetworkState> {
         _networkState.value = _networkState.value.copy(status = NetworkStatus.RECONNECTING)
         return Result.failure(UnsupportedOperationException("أعد الاتصال يدوياً"))
     }
